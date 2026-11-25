@@ -2,7 +2,7 @@ const fs=require('fs'),vm=require('vm'),assert=require('assert/strict');
 let src=fs.readFileSync(__dirname+'/../app.js','utf8');
 src=src.slice(0,src.indexOf("$('#editForm').onsubmit="));
 const nodes=new Map();
-const ctx={console,localStorage:{getItem:()=>null},document:{querySelector:s=>{if(!nodes.has(s))nodes.set(s,{});return nodes.get(s);},querySelectorAll:()=>[]}};
+const ctx={console,crypto:{randomUUID:()=>require('crypto').randomUUID()},localStorage:{getItem:()=>null},document:{querySelector:s=>{if(!nodes.has(s))nodes.set(s,{});return nodes.get(s);},querySelectorAll:()=>[]}};
 vm.createContext(ctx);vm.runInContext(src,ctx);
 vm.runInContext(`
 if(!valid(sample()))throw Error('Sample data invalid');
@@ -73,13 +73,14 @@ const period={id:'dev-one',type:'Process Development',title:'Process Development
 state.activities.push(period);
 if(!valid(state)||!valid(JSON.parse(JSON.stringify(state))))throw Error('Development period or export/import invalid');
 renderTimeline();markup=$('#content').innerHTML;
-if(!markup.includes('class="bar development" data-id="dev-one"')||!markup.includes('Edit Process Development for Atlas module'))throw Error('Development date strip missing');
-if(!markup.includes('width:90px')||!markup.includes('top:86px'))throw Error('Development strip geometry wrong');
+if(!markup.includes('class="development-mark" data-id="dev-one"')||!markup.includes('Edit Process development mark for Atlas module')||!markup.includes('class="development-bracket"')||!markup.includes('class="development-mark-label">Process development</span>'))throw Error('Development bracket and caption missing');
+if(markup.includes('class="bar development"')||!markup.includes('10 activities · 1 development marks'))throw Error('A development mark must not be another activity');
+if(!markup.includes('width:90px')||!markup.includes('top:76px'))throw Error('Development bracket geometry wrong');
 const totals=productSummary(state.activities.filter(a=>a.type==='Build'&&a.product==='Atlas module'));
 if(totals.qty!==24||totals.priority!=='High'||totals.start!=='2027-01-04')throw Error('Development period changed build quantity, priority or dates');
 if(JSON.stringify(state.activities[0])!==originalBuild)throw Error('Existing build modified');
-const withoutPeriodConflicts=conflicts().length;period.people=['Noor Haddad'];period.start='2027-01-18';period.end='2027-01-20';if(conflicts().length<=withoutPeriodConflicts)throw Error('Assigned development work should warn of vacation overlap');
-group='people';renderTimeline();if(!$('#content').innerHTML.includes('data-id="dev-one"'))throw Error('Assigned development missing from person view');
+const withoutPeriodConflicts=conflicts().length;period.people=['Noor Haddad'];period.start='2027-01-18';period.end='2027-01-20';if(conflicts().length!==withoutPeriodConflicts)throw Error('A date mark must not reserve resources or create conflicts');
+group='people';renderTimeline();if($('#content').innerHTML.includes('data-id="dev-one"'))throw Error('A development mark must not appear as an extra person task');
 group='products';typeFilter='Process Development';renderTimeline();if(!$('#content').innerHTML.includes('data-id="dev-one"')||$('#content').innerHTML.includes('class="bar productbar'))throw Error('Development filter failed');typeFilter='All';
 const two=renderDevelopmentPeriods([{...period,start:'2027-01-04',end:'2027-01-08'},{...period,id:'dev-two',start:'2027-01-06',end:'2027-01-10'}],start(),59,76);
 if(two.height!==180||!two.html.includes('top:130px'))throw Error('Overlapping development periods must have separate lanes');
@@ -88,8 +89,16 @@ if(!clipped.html.includes('left:3px')||!clipped.html.includes('width:66px'))thro
 state=sample();state.activities.push({...period,people:[],product:'Unknown'});if(valid(state))throw Error('Unknown development product accepted');
 state=sample();state.activities.push({...period,people:[],start:'2027-02-05',end:'2027-01-04'});if(valid(state))throw Error('Reversed development dates accepted');
 state=sample();state.activities.push({...period,people:[],start:'2027-01-09',end:'2027-01-10'});if(!valid(state))throw Error('Calendar annotation may cover a weekend');
+state=sample();const original=JSON.stringify(state.activities);
+const all=applyDevelopmentMark({...period,id:'all-mark',product:'__all_scheduled__'},null);
+if(all.activities.filter(a=>a.type==='Process Development').length!==3||!all.products.every(p=>all.activities.some(a=>a.type==='Process Development'&&a.product===p)))throw Error('All scheduled products must get a date bracket');
+if(JSON.stringify(state.activities)!==original||!valid(all))throw Error('Marking products must preserve current tasks and validate atomically');
+if(all.activities.some(a=>a.type==='Process Development'&&(a.people.length||a.qty||a.machine||a.title!=='Process development')))throw Error('Markers must have a fixed caption and no resource bookings');
+state=all;const changed=applyDevelopmentMark({...all.activities.find(a=>a.id==='all-mark'),end:'2027-01-29'},'all-mark');
+if(changed.activities.filter(a=>a.id==='all-mark').length!==1||changed.activities.find(a=>a.id==='all-mark').end!=='2027-01-29')throw Error('Existing marker edit failed');
 `,ctx);
 const css=fs.readFileSync(__dirname+'/../style.css','utf8');
 assert(css.includes('.timeline-scroll{overflow-x:auto;max-height:none}'));
 console.log('Passed: scheduling, conflicts, compact rows, bulk dates/priority/quantity/product, rename/merge, preservation of individual assignments, atomic rejection of invalid updates.');
+
 

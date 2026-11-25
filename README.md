@@ -52,6 +52,6 @@ The hub's Users list controls its application links. The planner itself is a sta
 
 
 
-## Process Development periods
+## Process development marks
 
-Use **+ Process Development**, select a product, enter the label and start/end dates, then save. The default label is Process Development. You can also open a product and use **+ Development**. These periods appear as striped date ranges beneath the product build bar and can be clicked to edit or dragged to reschedule. Lab team assignments are optional; assigned people see the period in their person timeline. Development periods do not increase module totals or change build priorities. Product dragging moves its build steps and development periods together; Edit all steps continues to apply only to build steps. Existing plans and JSON exports remain compatible.
+Use **+ Mark development** to choose a product (or **All scheduled products**) and dates. The timeline draws a bracket under that part of the product build bar, with **Process development** centered beneath it. A mark describes the product's steps during the selected period; it is not an additional task and reserves no lab team or machine capacity. Existing development periods display automatically as brackets. Click a bracket to change its dates or delete it. Product dragging moves its marks together with its steps.
