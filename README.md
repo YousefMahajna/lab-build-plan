@@ -49,3 +49,9 @@ This repository has its own Pages deployment and checks workflows. Enable Pages 
 Each activity reserves assigned resources for full working days. Training and vacations count as occupied person-days. The product quantity shown is its largest stage quantity, so the same modules are not counted repeatedly across stages. Separate batches can be represented as separate products. A product uses the highest priority among its stages; P1 = Critical, P2 = High, P3 = Normal, P4 = Low. Blank mixed fields in the bulk editor preserve each step's existing value.
 
 The hub's Users list controls its application links. The planner itself is a static browser-local tool and does not enforce authenticated roles. Do not treat a hub permission label as access control for this URL.
+
+
+
+## Process Development periods
+
+Use **+ Process Development**, select a product, enter the label and start/end dates, then save. The default label is Process Development. You can also open a product and use **+ Development**. These periods appear as striped date ranges beneath the product build bar and can be clicked to edit or dragged to reschedule. Lab team assignments are optional; assigned people see the period in their person timeline. Development periods do not increase module totals or change build priorities. Product dragging moves its build steps and development periods together; Edit all steps continues to apply only to build steps. Existing plans and JSON exports remain compatible.
