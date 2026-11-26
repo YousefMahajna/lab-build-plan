@@ -55,3 +55,8 @@ The hub's Users list controls its application links. The planner itself is a sta
 ## Process development marks
 
 Use **+ Mark development** to choose a product (or **All scheduled products**) and dates. The timeline draws a bracket under that part of the product build bar, with **Process development** centered beneath it. A mark describes the product's steps during the selected period; it is not an additional task and reserves no lab team or machine capacity. Existing development periods display automatically as brackets. Click a bracket to change its dates or delete it. Product dragging moves its marks together with its steps.
+
+
+### Development marks in By machine
+
+The machine timeline repeats each product’s Process development bracket beneath its matching build steps. A machine shows only the dates where that product’s marked period overlaps its build on that machine. Overlapping builds and development marks have enough vertical space for their labels. Editing a bracket changes the same saved product mark in both views; annotations do not add machine bookings or capacity. The Process Development type filter also finds related machine builds.

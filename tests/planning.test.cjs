@@ -96,9 +96,31 @@ if(JSON.stringify(state.activities)!==original||!valid(all))throw Error('Marking
 if(all.activities.some(a=>a.type==='Process Development'&&(a.people.length||a.qty||a.machine||a.title!=='Process development')))throw Error('Markers must have a fixed caption and no resource bookings');
 state=all;const changed=applyDevelopmentMark({...all.activities.find(a=>a.id==='all-mark'),end:'2027-01-29'},'all-mark');
 if(changed.activities.filter(a=>a.id==='all-mark').length!==1||changed.activities.find(a=>a.id==='all-mark').end!=='2027-01-29')throw Error('Existing marker edit failed');
+state=sample();group='machines';month='both';typeFilter='All';search='';priorityFilter='All';
+const machinePeriod={...period,id:'machine-mark',people:[],start:'2027-01-06',end:'2027-01-16',product:'Atlas module'};
+state.activities.push(machinePeriod,{...state.activities.find(a=>a.id==='3'),id:'overlap-on-machine',start:'2027-01-08',end:'2027-01-10'});const preservedPlan=JSON.stringify(state);
+const firstMarks=developmentMarksForBuild(state.activities.find(a=>a.id==='1'));
+const thermalMarks=developmentMarksForBuild(state.activities.find(a=>a.id==='2'));
+if(firstMarks.length!==1||firstMarks[0].start!=='2027-01-06'||firstMarks[0].end!=='2027-01-12')throw Error('Assembly development intersection wrong');
+if(thermalMarks.length!==1||thermalMarks[0].start!=='2027-01-13'||thermalMarks[0].end!=='2027-01-16')throw Error('Thermal development intersection wrong');
+if(developmentMarksForBuild(state.activities.find(a=>a.id==='3')).length)throw Error('Development mark leaked to another product');
+renderTimeline();markup=$('#content').innerHTML;
+if((markup.match(/class="development-mark" data-id="machine-mark"/g)||[]).length!==2)throw Error('Machine view should repeat a mark under each related machine build');
+const machineRows=markup.split('<div class="timerow">');
+if(!machineRows.find(r=>r.includes('<strong>Assembly station 01</strong>')).includes('data-id="machine-mark"')||!machineRows.find(r=>r.includes('<strong>Thermal chamber</strong>')).includes('data-id="machine-mark"')||machineRows.find(r=>r.includes('<strong>Optical test bench</strong>')).includes('data-id="machine-mark"'))throw Error('Wrong machines show development marks');
+if(!markup.includes('top:58px')||!markup.includes('top:124px'))throw Error('Build lanes need space for development brackets');
+if(JSON.stringify(state)!==preservedPlan)throw Error('Machine projection mutated saved marks');
+group='products';renderTimeline();if(($('#content').innerHTML.match(/data-id="machine-mark"/g)||[]).length!==1)throw Error('Product mark duplicated after switching views');
+group='machines';typeFilter='Process Development';renderTimeline();if(($('#content').innerHTML.match(/class="development-mark" data-id="machine-mark"/g)||[]).length!==2)throw Error('Machine development filter dropped linked builds');typeFilter='All';
+machinePeriod.start='2027-01-28';machinePeriod.end='2027-02-04';
+const crossing={...state.activities[0],start:'2027-01-26',end:'2027-02-10'};
+const febMarks=developmentMarksForBuild(crossing,'2027-02-01','2027-02-28');
+if(febMarks.length!==1||febMarks[0].start!=='2027-02-01'||febMarks[0].end!=='2027-02-04')throw Error('Machine development dates should clip to the visible month');
+if(developmentMarksForBuild(crossing,'2027-02-05','2027-02-28').length)throw Error('An out-of-period mark should not render');
 `,ctx);
 const css=fs.readFileSync(__dirname+'/../style.css','utf8');
 assert(css.includes('.timeline-scroll{overflow-x:auto;max-height:none}'));
 console.log('Passed: scheduling, conflicts, compact rows, bulk dates/priority/quantity/product, rename/merge, preservation of individual assignments, atomic rejection of invalid updates.');
+
 
 
