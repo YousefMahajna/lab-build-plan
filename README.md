@@ -8,7 +8,7 @@ This standalone website has its own repository, `YousefMahajna/lab-build-plan`, 
 
 ## Features
 
-- Editable January–February timeline, with a configurable planning year and working week.
+- Editable full-year timeline, with a configurable planning year and working week.
 - Products, machines, module quantities, priorities, practical engineers, vacations and training.
 - Product, person and machine views with consistent product colors and a side legend.
 - One bar per product; click to edit its steps or use Edit all steps to update product, dates, quantity and priority together.
@@ -60,3 +60,9 @@ Use **+ Mark development** to choose a product (or **All scheduled products**) a
 ### Development marks in By machine
 
 The machine timeline repeats each product’s Process development bracket beneath its matching build steps. A machine shows only the dates where that product’s marked period overlaps its build on that machine. Overlapping builds and development marks have enough vertical space for their labels. Editing a bracket changes the same saved product mark in both views; annotations do not add machine bookings or capacity. The Process Development type filter also finds related machine builds.
+
+
+
+## Full-year timeline navigation
+
+Activities and development marks can be scheduled anywhere from January 1 to December 31 of the planning year. Use From/To month selectors for any consecutive range, 1 month/3 months/Full year presets, and Earlier/Later to move the selected window. Drag the annual navigator’s selected window to pan, or its edges to change the visible range and fit it to the available width. The zoom slider and zoom buttons adjust day scale; Fit period restores a fitted overview. Use the horizontal scrollbar for detailed views or Ctrl+mouse wheel to zoom. Arrow keys move the focused navigator window or edge by a day; Shift+arrow moves a week. View preferences save separately from the plan and do not change activity dates. Existing plans and exports remain compatible.

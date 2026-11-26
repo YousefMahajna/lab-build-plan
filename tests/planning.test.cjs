@@ -8,7 +8,7 @@ vm.runInContext(`
 if(!valid(sample()))throw Error('Sample data invalid');
 if(working('2027-01-04','2027-01-08').length!==5)throw Error('Working week count');
 if(working('2027-01-09','2027-01-10').length!==0)throw Error('Weekend count');
-if(working(start(),end()).length!==41)throw Error('Period working days');
+if(working(start(),end()).length!==261)throw Error('Period working days');
 const cs=conflicts();if(!cs.some(c=>c.people.includes('Noor Haddad')&&[c.a.type,c.b.type].includes('Vacation')))throw Error('Vacation collision missed');
 if(!cs.some(c=>c.people.includes('Alex Morgan')&&[c.a.type,c.b.type].includes('Training')))throw Error('Training collision missed');
 state.activities=[{...sample().activities[0],id:'a',people:['Alex Morgan'],start:'2027-01-04',end:'2027-01-08'},{...sample().activities[0],id:'b',people:['Sam Chen'],start:'2027-01-05',end:'2027-01-06'}];
@@ -17,7 +17,7 @@ state.activities[1].start='2027-01-11';state.activities[1].end='2027-01-12';if(c
 state=sample();state.activities[0].start='2027-01-32';if(valid(state))throw Error('Invalid date accepted');
 state=sample();state.activities[0].people=['Unknown'];if(valid(state))throw Error('Unknown person accepted');
 state=sample();state.activities[0].qty=-1;if(valid(state))throw Error('Invalid qty accepted');
-state=sample();state.activities[0].end='2027-03-01';if(valid(state))throw Error('Outside period accepted');
+state=sample();state.activities[0].end='2028-01-01';if(valid(state))throw Error('Outside period accepted');
 state=sample();state.activities[1].id=state.activities[0].id;if(valid(state))throw Error('Duplicate IDs accepted');
 state=sample();
 const summary=productSummary(state.activities.filter(a=>a.type==='Build'&&a.product==='Atlas module'));
@@ -30,7 +30,7 @@ if((markup.match(/class="bar productbar/g)||[]).length!==3)throw Error('Expected
 if(!markup.includes('Lab team: Alex Morgan, Dana Levy, Sam Chen')||!markup.includes('24 modules')||!markup.includes('class="productpriority" data-priority="P2">P2'))throw Error('Missing people, quantity or priority');
 if((markup.match(/class="labelpriority"/g)||[]).length!==3||!markup.includes('aria-label="Priority P1">P1'))throw Error('Missing priority badges on fixed product labels');
 group='people';renderTimeline();if($('#content').innerHTML.includes('class="bar productbar'))throw Error('Person view unexpectedly collapsed');
-group='products';month='feb';renderTimeline();if((($('#content').innerHTML).match(/class="bar productbar/g)||[]).length!==2)throw Error('Month filtering failed');
+group='products';setTimelineMonths(1,1,false);unit=24;renderTimeline();if((($('#content').innerHTML).match(/class="bar productbar/g)||[]).length!==2)throw Error('Month filtering failed');
 state=sample();
 const before=JSON.stringify(state);
 const updated=updateProductSteps('Atlas module',{product:'Atlas revision B',start:'2027-02-01',end:'2027-02-12',qty:'120',priority:'Critical'});
@@ -44,7 +44,7 @@ if(JSON.stringify(kept)!==before)throw Error('Blank fields should preserve indiv
 const merged=updateProductSteps('Atlas module',{product:'Nova module'});
 if(merged.products.filter(p=>p==='Nova module').length!==1||merged.activities.filter(a=>a.product==='Nova module').length!==5)throw Error('Moving to existing product failed');
 for(const changes of [{start:'2027-02-15',end:'2027-02-01'},{qty:'0'},{qty:'1.5'},{priority:'P0'},{start:'2027-03-01'},{start:'2027-01-09',end:'2027-01-10'},{product:'   '}]){let failed=false;try{updateProductSteps('Atlas module',changes);}catch{failed=true;}if(!failed)throw Error('Invalid bulk values accepted');if(JSON.stringify(state)!==before)throw Error('Rejected update changed the plan');}
-state=sample();state.products.unshift('Empty product');group='products';month='both';renderTimeline();
+state=sample();state.products.unshift('Empty product');group='products';setTimelineMonths(0,1,false);unit=24;renderTimeline();
 markup=$('#content').innerHTML;
 const order=['Orion module','Atlas module','Nova module','Time away &amp; training','Empty product'].map(p=>markup.indexOf('<strong>'+p+'</strong>'));
 if(order.some(i=>i<0)||!order.every((v,i)=>!i||v>order[i-1]))throw Error('Product priority order or empty-last order failed');
@@ -57,7 +57,7 @@ rankedGroups.push({name:'Time away & training',availability:true,items:[{priorit
 if(rankedGroups.map(g=>g.name).join(',')!=='P1 product,P2 product,P3 product,P4 product,Time away & training,Unscheduled')throw Error('Training must appear before unscheduled');
 const emptyRow=markup.split('<div class="timerow">').find(row=>row.includes('<strong>Empty product</strong>'));
 if(!emptyRow||emptyRow.includes('labelpriority'))throw Error('Unscheduled product must have no P badge');
-state=sample();group='products';month='both';renderTimeline();
+state=sample();group='products';setTimelineMonths(0,1,false);unit=24;renderTimeline();
 const atlasColor=productColorStyle('Atlas module'),novaColor=productColorStyle('Nova module');
 if(atlasColor===novaColor)throw Error('Products need distinct colors');
 markup=$('#content').innerHTML;
@@ -67,7 +67,7 @@ for(const g of ['people','machines']){group=g;renderTimeline();const html=$('#co
 state.products.push('Product 4','Product 5','Product 6','Product 7','Product 8');
 if(new Set(state.products.map(p=>productColorStyle(p))).size!==8)throw Error('Eight products should have unique colors');
 if(productColorStyle('Atlas module')!==atlasColor)throw Error('Color changed after adding products');
-state=sample();group='products';month='both';
+state=sample();group='products';setTimelineMonths(0,1,false);unit=24;
 const originalBuild=JSON.stringify(state.activities[0]);
 const period={id:'dev-one',type:'Process Development',title:'Process Development',product:'Atlas module',machine:'',people:[],start:'2027-01-02',end:'2027-01-05',qty:0,priority:'Normal',status:'Planned',notes:''};
 state.activities.push(period);
@@ -96,7 +96,7 @@ if(JSON.stringify(state.activities)!==original||!valid(all))throw Error('Marking
 if(all.activities.some(a=>a.type==='Process Development'&&(a.people.length||a.qty||a.machine||a.title!=='Process development')))throw Error('Markers must have a fixed caption and no resource bookings');
 state=all;const changed=applyDevelopmentMark({...all.activities.find(a=>a.id==='all-mark'),end:'2027-01-29'},'all-mark');
 if(changed.activities.filter(a=>a.id==='all-mark').length!==1||changed.activities.find(a=>a.id==='all-mark').end!=='2027-01-29')throw Error('Existing marker edit failed');
-state=sample();group='machines';month='both';typeFilter='All';search='';priorityFilter='All';
+state=sample();group='machines';setTimelineMonths(0,1,false);unit=24;typeFilter='All';search='';priorityFilter='All';
 const machinePeriod={...period,id:'machine-mark',people:[],start:'2027-01-06',end:'2027-01-16',product:'Atlas module'};
 state.activities.push(machinePeriod,{...state.activities.find(a=>a.id==='3'),id:'overlap-on-machine',start:'2027-01-08',end:'2027-01-10'});const preservedPlan=JSON.stringify(state);
 const firstMarks=developmentMarksForBuild(state.activities.find(a=>a.id==='1'));
@@ -117,10 +117,55 @@ const crossing={...state.activities[0],start:'2027-01-26',end:'2027-02-10'};
 const febMarks=developmentMarksForBuild(crossing,'2027-02-01','2027-02-28');
 if(febMarks.length!==1||febMarks[0].start!=='2027-02-01'||febMarks[0].end!=='2027-02-04')throw Error('Machine development dates should clip to the visible month');
 if(developmentMarksForBuild(crossing,'2027-02-05','2027-02-28').length)throw Error('An out-of-period mark should not render');
+state=sample();group='products';search='';typeFilter='All';priorityFilter='All';
+state.activities[0].start='2027-07-05';state.activities[0].end='2027-07-16';
+state.activities[1].start='2027-12-20';state.activities[1].end='2027-12-31';
+if(!valid(state)||!valid(JSON.parse(JSON.stringify(state))))throw Error('Full-year schedules must validate and round trip');
+setTimelineMonths(6,8,false);unit=24;renderTimeline();
+if(visibleRange().lo!=='2027-07-01'||visibleRange().hi!=='2027-09-30')throw Error('Multi-month selection failed');
+if(defaultActivityDates().start!=='2027-07-01'||defaultActivityDates().end!=='2027-07-05')throw Error('New activity defaults should follow the selected month');
+if(!$('#content').innerHTML.includes('JULY 2027')||!$('#content').innerHTML.includes('SEPTEMBER 2027')||$('#content').innerHTML.includes('DECEMBER 2027'))throw Error('Selected month headings incorrect');
+if(!filterActivities().some(a=>a.id==='1')||filterActivities().some(a=>a.id==='2'))throw Error('Activities must filter by selected months');
+setTimelineMonths(0,11,false);renderTimeline();
+state.activities.push({id:'summer-mark',type:'Process Development',title:'Process development',product:'Atlas module',machine:'',people:[],start:'2027-07-05',end:'2027-07-09',qty:0,priority:'Normal',status:'Planned',notes:''});
+if(!valid(state)||developmentMarksForBuild(state.activities[0]).length!==1)throw Error('Development marks must work beyond February');
+if(yearLength()!==365||(($('#content').innerHTML).match(/class="month"/g)||[]).length!==12)throw Error('Full-year overview needs all twelve months');
+if(!$('#content').innerHTML.includes('id="yearTrack"')||!$('#content').innerHTML.includes('Resize visible start date')||!$('#content').innerHTML.includes('id="zoomLevel"'))throw Error('Navigator or zoom controls missing');
+const lastDay=yearLength()-1;
+setTimelineRange(-20,999,false,false);if(rangeStartDay!==0||rangeEndDay!==lastDay)throw Error('View must clamp to planning year');
+state=sample();setTimelineMonths(0,1,false);unit=24;
+const yearTrack=$('#yearTrack'),selectionNode=$('#yearSelection'),startNode=$('#rangeStartHandle'),endNode=$('#rangeEndHandle'),trackEvents={};
+yearTrack.addEventListener=(name,fn)=>{trackEvents[name]=fn;};yearTrack.getBoundingClientRect=()=>({left:0,width:365});yearTrack.setPointerCapture=()=>{};
+$('.timeline-scroll').addEventListener=()=>{};
+for(const [node,id] of [[selectionNode,'yearSelection'],[startNode,'rangeStartHandle'],[endNode,'rangeEndHandle']]){node.id=id;node.style={};node.events={};node.addEventListener=(key,fn)=>{node.events[key]=fn;};node.focus=()=>{};}
+wireTimelineNavigation();
+trackEvents.pointerdown({button:0,target:selectionNode,clientX:10,pointerId:1,preventDefault(){}});
+trackEvents.pointermove({clientX:41});
+if(rangeStartDay!==0||!selectionNode.style.left)throw Error('Navigator should preview without committing a partial drag');
+trackEvents.pointerup();if(visibleRange().lo!=='2027-02-01'||visibleRange().hi!=='2027-03-31')throw Error('Dragging navigator must pan the selected range');
+trackEvents.pointerdown({button:0,target:startNode,clientX:31,pointerId:1,preventDefault(){}});trackEvents.pointermove({clientX:41});trackEvents.pointerup();
+if(visibleRange().lo!=='2027-02-11'||visibleRange().hi!=='2027-03-31')throw Error('Dragging start edge must resize the visible period');
+const beforePan=JSON.stringify(state);const selectedSpan=rangeEndDay-rangeStartDay;
+trackEvents.pointerdown({button:0,target:selectionNode,clientX:50,pointerId:1,preventDefault(){}});trackEvents.pointermove({clientX:-999});trackEvents.pointerup();
+if(rangeStartDay!==0||rangeEndDay!==selectedSpan)throw Error('Navigator pan should preserve its span at the year boundary');
+endNode.events.keydown({key:'ArrowRight',shiftKey:true,preventDefault(){}});if(rangeEndDay!==selectedSpan+7)throw Error('Keyboard edge resize must support week steps');
+const rangeBeforeZoom=JSON.stringify(visibleRange());$('#zoomLevel').onchange({target:{value:'48'}});
+if(unit!==48||JSON.stringify(visibleRange())!==rangeBeforeZoom)throw Error('Zoom must change scale, not selected dates');
+$('#rangeFirstMonth').onchange({target:{value:'6'}});$('#rangeLastMonth').onchange({target:{value:'8'}});
+if(visibleRange().lo!=='2027-07-01'||visibleRange().hi!=='2027-09-30')throw Error('Month selector event wiring failed');
+$('#fullYearBtn').onclick();if(rangeStartDay!==0||rangeEndDay!==364||unit>=24)throw Error('Full year button must fit an annual overview');
+if(JSON.stringify(state)!==beforePan)throw Error('Navigation must never change the plan');
+const viewStorage={};localStorage.setItem=(k,v)=>{viewStorage[k]=v;};localStorage.getItem=k=>viewStorage[k]??null;
+setTimelineMonths(9,11,false);unit=12;saveTimelineView();rangeStartDay=0;rangeEndDay=30;unit=24;restoreTimelineView();
+if(visibleRange().lo!=='2027-10-01'||visibleRange().hi!=='2027-12-31'||unit!==12)throw Error('View preferences must survive reload separately from plan data');
+state=sample();state.year=2028;state.activities=state.activities.map(a=>({...a,start:a.start.replace('2027','2028'),end:a.end.replace('2027','2028')}));state.activities[0].start='2028-02-29';state.activities[0].end='2028-03-02';
+setTimelineMonths(1,1,false);if(!valid(state)||visibleRange().hi!=='2028-02-29'||yearLength()!==366)throw Error('Leap-year scheduling or February selection failed');
+
 `,ctx);
 const css=fs.readFileSync(__dirname+'/../style.css','utf8');
 assert(css.includes('.timeline-scroll{overflow-x:auto;max-height:none}'));
 console.log('Passed: scheduling, conflicts, compact rows, bulk dates/priority/quantity/product, rename/merge, preservation of individual assignments, atomic rejection of invalid updates.');
+
 
 
 
